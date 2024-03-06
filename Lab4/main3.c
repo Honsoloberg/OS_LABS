@@ -220,6 +220,56 @@ void handleProcess(Process* process, Node** RealTimeQueue, Node** UserJobQueue, 
     }
 }
 
+
+void moveprocess(Node* Processor, Node* RealTimeQueue, Node* PrioOne, Node* PrioTwo , Node* PrioThree){
+    switch(Processor->process->priority){
+        case 0:
+            return;
+        case 1:{
+            if(RealTimeQueue->next != NULL){
+                insertAtEnd(&PrioTwo, Processor->process);
+                deleteNode(&Processor, Processor->process);
+                insertAtBeginning(&Processor, RealTimeQueue->process);
+                deleteNode(&RealTimeQueue, RealTimeQueue->process);
+            }
+        }
+        case 2:{
+            if(RealTimeQueue->next != NULL){
+                insertAtEnd(&PrioThree, Processor->process);
+                deleteNode(&Processor, Processor->process);
+                insertAtBeginning(&Processor, RealTimeQueue->process);
+                deleteNode(&RealTimeQueue, RealTimeQueue->process);
+            }else if(PrioOne->next != NULL){
+                insertAtEnd(&PrioThree, Processor->process);
+                deleteNode(&Processor, Processor->process);
+                insertAtBeginning(&Processor, PrioOne->process);
+                deleteNode(&PrioOne, PrioOne->process);
+            }
+        }
+        case 3:{
+            if(RealTimeQueue->next != NULL){
+                insertAtEnd(&PrioThree, Processor->process);
+                deleteNode(&Processor, Processor->process);
+                insertAtBeginning(&Processor, RealTimeQueue->process);
+                deleteNode(&RealTimeQueue, RealTimeQueue->process);
+            }else if(PrioOne->next != NULL){
+                insertAtEnd(&PrioThree, Processor->process);
+                deleteNode(&Processor, Processor->process);
+                insertAtBeginning(&Processor, PrioOne->process);
+                deleteNode(&PrioOne, PrioOne->process);
+            }else if(PrioTwo->next != NULL){
+                insertAtEnd(&PrioThree, Processor->process);
+                deleteNode(&Processor, Processor->process);
+                insertAtBeginning(&Processor, PrioTwo->process);
+                deleteNode(&PrioTwo, PrioTwo->process);
+            }
+        }
+    }
+
+}
+
+
+
 void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Node** UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree, Node* DispatchList) {
     for (int currentTime = 0; currentTime < MAX_PROCESSES; currentTime++) {
         printf("New Tick %d\n",currentTime);
@@ -239,7 +289,7 @@ void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Nod
             }
 
             // Function call to see if processor is being used by the highest priority funciton possible & to find new function for processor
-            moveprocess(Processor, RealTimeQueue, UserJobQueue, PrioOne, PrioTwo, PrioThree, DispatchList);
+            moveprocess(Processor, *RealTimeQueue, PrioOne, PrioTwo, PrioThree);
 
 
         }
