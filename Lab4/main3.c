@@ -5,7 +5,8 @@ Nathan Perez 100754066
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h>
+#include <windows.h> //Comment out if running on Linux
+#include <string.h>
 #include <stdbool.h>
 #include "MEMmanage.h"
 
@@ -82,18 +83,10 @@ void insertAtEnd(Node** head, Process* process) {
 }
 
 void deleteNode(Node** head, Process* process) {
-    Node* temp = *head, *prev = NULL;
-    if (temp != NULL && temp->process->arrivalTime == process->arrivalTime) {
-        *head = temp->next;
-        free(temp);
-        return;
-    }
-    while (temp != NULL && temp->process->arrivalTime != process->arrivalTime) {
-        prev = temp;
-        temp = temp->next;
-    }
-    if (temp == NULL) return; // Process not found in the list
-    prev->next = temp->next;
+    Node* temp = *head,
+    *head = temp->next;
+
+    destroyJob(temp->process);
     free(temp);
 }
 
@@ -132,8 +125,20 @@ void getFilenameFromUser(char* filename, int max_length) {
     }
 }
 
+// Function to insert
+void insertInOrder(Process* array[], Process* newProcess, int *size) {
+    int i = *size - 1;
+    // Find the correct position for the new process
+    while (i >= 0 && array[i]->arrivalTime > newProcess->arrivalTime) {
+        array[i + 1] = array[i]; // Shift elements to the right
+        i--;
+    }
+    array[i + 1] = newProcess; // Insert the new process
+    (*size)++; // Increase the size of the array
+}
+
 // Function to read text  file
-void readProcesses(const char* filename, Process processes[], int *size) {
+void readProcesses(const char* filename, Process* processes[], int *size) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening file");
@@ -151,22 +156,10 @@ void readProcesses(const char* filename, Process processes[], int *size) {
                   &tempProcess.scanners,
                   &tempProcess.modems,
                   &tempProcess.cds) == 8) {
-        insertInOrder(processes, tempProcess, size);
+        insertInOrder(processes, &tempProcess, size);
     }
 
     fclose(file);
-}
-
-// Function to insert
-void insertInOrder(Process array[], Process newProcess, int *size) {
-    int i = *size - 1;
-    // Find the correct position for the new process
-    while (i >= 0 && array[i].arrivalTime > newProcess.arrivalTime) {
-        array[i + 1] = array[i]; // Shift elements to the right
-        i--;
-    }
-    array[i + 1] = newProcess; // Insert the new process
-    (*size)++; // Increase the size of the array
 }
 
 // Function to print the contents of the processes array, this is a test function, not needed in end program
@@ -241,7 +234,8 @@ void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Nod
             // Check if the first node in the DispatchList can be queue
             while(checkResource(DispatchList->process))
             {
-                handleProcess(Processor, RealTimeQueue, UserJobQueue, PrioOne, PrioTwo, PrioThree, DispatchList);
+                Allocate(DispatchList->process);
+                handleProcess(Processor->process, RealTimeQueue, UserJobQueue, PrioOne, PrioTwo, PrioThree, DispatchList);
             }
 
             // Function call to see if processor is being used by the highest priority funciton possible & to find new function for processor
@@ -278,7 +272,7 @@ int main() {
     // Simple test function call to check if program was able to pull values
     //printProcesses(processes, size); // comment this out before hand in
     // After this runs, there will be an array holding all of the process that were collected from the text file
-    createLinkedListFromArray(DispatchList, processes, &size);
+    createLinkedListFromArray(DispatchList, processes, size);
     displayList(DispatchList);
 
 

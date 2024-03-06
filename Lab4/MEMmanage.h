@@ -35,61 +35,61 @@ typedef struct Process{
 }Process;
 
 //Create Job Variables
-Process *makeJob(int time, int p, int dur, int size, int printers, int scanners, int modems, int cds){
+// Process *makeJob(int time, int p, int dur, int size, int printers, int scanners, int modems, int cds){
 
-    Process *job = (Process*) malloc(sizeof(Process));
+//     Process *job = (Process*) malloc(sizeof(Process));
 
-    if(p == 0){//Setup for a Real-Time Job
-        if((MEM_RT + size) <= RT_MEM){
+//     if(p == 0){//Setup for a Real-Time Job
+//         if((MEM_RT + size) <= RT_MEM){
 
-            if(time >= 0){
-                job->arrivalTime = time;
-            }
-            if(p >= 0){
-                job->priority = p;
-            }
-            if(dur > 0){
-                job->processorTime = dur;
-            }
-            if(size > 0){
-                job->memoryRequirement = size;
-            }
+//             if(time >= 0){
+//                 job->arrivalTime = time;
+//             }
+//             if(p >= 0){
+//                 job->priority = p;
+//             }
+//             if(dur > 0){
+//                 job->processorTime = dur;
+//             }
+//             if(size > 0){
+//                 job->memoryRequirement = size;
+//             }
 
-            return job;
-        }
-    }
+//             return job;
+//         }
+//     }
 
-    //Setup for a User Job
+//     //Setup for a User Job
 
-    if(time >= 0){
-        job->arrivalTime = time;
-    }
-    if(p >= 0){
-        job->priority = p;
-    }
-    if(dur > 0){
-        job->processorTime = dur;
-    }
-    if(size > 0){
-        job->memoryRequirement = size;
-    }
-    if(printers >= 0){
-        job->printers = printers;
-    }
-    if(scanners >= 0){
-        job->scanners = scanners;
-    }
-    if(modems >= 0){
-        job->modems = modems;
-    }
-    if(cds >= 0){
-        job->cds = cds;
-    }
+//     if(time >= 0){
+//         job->arrivalTime = time;
+//     }
+//     if(p >= 0){
+//         job->priority = p;
+//     }
+//     if(dur > 0){
+//         job->processorTime = dur;
+//     }
+//     if(size > 0){
+//         job->memoryRequirement = size;
+//     }
+//     if(printers >= 0){
+//         job->printers = printers;
+//     }
+//     if(scanners >= 0){
+//         job->scanners = scanners;
+//     }
+//     if(modems >= 0){
+//         job->modems = modems;
+//     }
+//     if(cds >= 0){
+//         job->cds = cds;
+//     }
         
-    return job;
+//     return job;
 
 
-}
+// }
 
 int checkResource(Process *job){//Checks if sufficient resources are available
     if(job->priority == 0){
