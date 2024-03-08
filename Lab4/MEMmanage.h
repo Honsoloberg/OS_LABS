@@ -125,7 +125,7 @@ void Allocate(Process *job){
 void destroyJob(Process *job){
     if(job->priority == 0){
         MEM_RT-=job->memoryRequirement;
-
+        free(job);
         return;
     }
 
@@ -135,6 +135,6 @@ void destroyJob(Process *job){
     T_modems-=job->modems;
     T_cds-=job->cds;
 
-
+    free(job);
     return;
 }

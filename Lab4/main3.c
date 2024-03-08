@@ -120,25 +120,18 @@ void insertInOrder(Process *array[], Process* newProcess, int *size) {
 }
 
 // Function to read text file and store processes in an array
-void readProcesses(const char* filename, Process processes[], int *size) {
+void readProcesses(const char* filename, Process *processes[], int *size) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
 
-    //finish make job dumb ass RETARRRRRRRRRD
+    int arrive, priority, dur, MEM, print, scan, mod, cds;
     int i;
     for(i = 0; !feof(file); i++){
-        if (fscanf(file, "%d, %d, %d, %d, %d, %d, %d, %d\n",
-                   &processes[i].arrivalTime,
-                   &processes[i].priority,
-                   &processes[i].processorTime,
-                   &processes[i].memoryRequirement,
-                   &processes[i].printers,
-                   &processes[i].scanners,
-                   &processes[i].modems,
-                   &processes[i].cds)){
+        if (fscanf(file, "%d, %d, %d, %d, %d, %d, %d, %d\n", &arrive, &priority, &dur, &MEM, &print, &scan, &mod, &cds)){
+           processes[i] = makeJob(arrive, priority, dur, MEM, print, scan, mod, cds); 
 
         } else {
             perror("File Read Error");
@@ -153,24 +146,24 @@ void readProcesses(const char* filename, Process processes[], int *size) {
 
 
 // Function to print the contents of the processes array, this is a test function, not needed in end program
-void printProcesses(const Process processes[], int size) {
+void printProcesses(Process *processes[], int size) {
     printf("Listing all processes:\n");
     for (int i = 0; i < size; ++i) {
         printf("Process %d:\n", i + 1);
-        printf("\tArrival Time: %d\n", processes[i].arrivalTime);
-        printf("\tPriority: %d\n", processes[i].priority);
-        printf("\tProcessor Time: %d\n", processes[i].processorTime);
-        printf("\tMemory Requirement: %d\n", processes[i].memoryRequirement);
-        printf("\tPrinters: %d\n", processes[i].printers);
-        printf("\tScanners: %d\n", processes[i].scanners);
-        printf("\tModems: %d\n", processes[i].modems);
-        printf("\tCDs: %d\n\n", processes[i].cds);
+        printf("\tArrival Time: %d\n", processes[i]->arrivalTime);
+        printf("\tPriority: %d\n", processes[i]->priority);
+        printf("\tProcessor Time: %d\n", processes[i]->processorTime);
+        printf("\tMemory Requirement: %d\n", processes[i]->memoryRequirement);
+        printf("\tPrinters: %d\n", processes[i]->printers);
+        printf("\tScanners: %d\n", processes[i]->scanners);
+        printf("\tModems: %d\n", processes[i]->modems);
+        printf("\tCDs: %d\n\n", processes[i]->cds);
     }
 }
 
-void createLinkedListFromArray(Node** DispatchList, Process processes[], int size) {
+void createLinkedListFromArray(Node** DispatchList, Process *processes[], int size) {
     for (int i = 0; i < size; i++) {
-        insertAtEnd(DispatchList, &processes[i]);
+        insertAtEnd(DispatchList, processes[i]);
     }
 }
 
@@ -348,7 +341,7 @@ int main() {
     // All the File stuff
     char filename[256]; // Buffer to hold the filename
     int size;
-    Process processes[1000];
+    Process *processes[1000];
     getFilenameFromUser(filename, sizeof(filename)); // Call the function to get the filename from the user
     readProcesses(filename, processes, &size);// Call the function to process the file
     // Simple test function call to check if program was able to pull values
