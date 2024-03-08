@@ -64,8 +64,9 @@ void deleteNode(Node **head) {
         printf("List is already empty.\n");
     } else {
         Node *toDelete = *head;
-        *head = (*head)->next; 
+        *head = toDelete->next; 
         destroyJob(toDelete->process); // needs to be passed a process (process is the data in each node)
+        toDelete->process = NULL;
         free(toDelete); 
         printf("SUCCESSFULLY DELETED FIRST NODE FROM LIST\n");
     }
@@ -126,34 +127,27 @@ void readProcesses(const char* filename, Process processes[], int *size) {
         exit(EXIT_FAILURE);
     }
 
-    *size = 0; // Start with an empty array
-    while (*size < 1000) { // Ensure we don't overflow the array, MAX_SIZE is the maximum capacity of 'processes'
+    //finish make job dumb ass RETARRRRRRRRRD
+    int i;
+    for(i = 0; !feof(file); i++){
         if (fscanf(file, "%d, %d, %d, %d, %d, %d, %d, %d\n",
-                   &processes[*size].arrivalTime,
-                   &processes[*size].priority,
-                   &processes[*size].processorTime,
-                   &processes[*size].memoryRequirement,
-                   &processes[*size].printers,
-                   &processes[*size].scanners,
-                   &processes[*size].modems,
-                   &processes[*size].cds) == 8) {
-            // Successfully read a process, increment size
-            (*size)++;
+                   &processes[i].arrivalTime,
+                   &processes[i].priority,
+                   &processes[i].processorTime,
+                   &processes[i].memoryRequirement,
+                   &processes[i].printers,
+                   &processes[i].scanners,
+                   &processes[i].modems,
+                   &processes[i].cds)){
+
         } else {
-            // If fscanf fails to read 8 items, break out of the loop
-            // Also check if we've reached the end of the file or encountered an error
-            if (feof(file)) {
-                // End of file reached successfully
-                break;
-            } else if (ferror(file)) {
-                // File read error encountered
-                perror("Error reading file");
-                break;
-            }
+            perror("File Read Error");
+            exit(1);
         }
     }
 
     fclose(file);
+    *size = i;
 }
 
 
@@ -241,8 +235,8 @@ void moveprocess(Node *Processor, Node* RealTimeQueue, Node* PrioOne, Node* Prio
             insertAtBeginning(&Processor, PrioThree->process);
             deleteNode(&PrioThree);
         }
-    }
-    switch(Processor->process->priority){
+    }else {
+        switch(Processor->process->priority){
         case 0:
             return;
         case 1:{
@@ -288,28 +282,29 @@ void moveprocess(Node *Processor, Node* RealTimeQueue, Node* PrioOne, Node* Prio
             break;
         }
     }
+    }
 
 }
 
 
-void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Node** UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree, Node* DispatchList) {
+void simulateProcessArrival(Node* Processor, Node** RealTimeQueue, Node** UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree, Node* DispatchList) {
     for (int currentTime = 0; currentTime < MAX_PROCESSES; currentTime++) {
         printf("New Tick %d\n",currentTime);
-        for (int i = 0; i < size; i++) {
-
-            if(Processor->process->processorTime == 0){
-                destroyJob(Processor->process);
-                Processor = NULL;
-            }
 
             // Decrement processorTime of current running process in Processor
             if(Processor!=NULL){
-                printf("hello there\n");
-                Processor->process->processorTime -= 1;
+                if(Processor->process->processorTime == 0){
+                    destroyJob(Processor->process);
+                    Processor = NULL;
+                }else{
+                    printf("hello there\n");
+                    Processor->process->processorTime -= 1;
+                }
             }
-                printf("hello there 2\n");
-            // Check if the first node in the DispatchList can be queue
+
+
             while(DispatchList->process->arrivalTime <= currentTime){
+                printf("hello there 2\n");
                 if(DispatchList->process->priority == 0){
                     if(checkResource(DispatchList->process)){
                         Allocate(DispatchList->process);
@@ -325,10 +320,10 @@ void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Nod
             }
             printf("hello there 4\n");
             // Function call to see if processor is being used by the highest priority funciton possible & to find new function for processor
-            moveprocess(Processor, *RealTimeQueue, *PrioOne, *PrioTwo, *PrioThree);
-
-
-        }
+            if(*RealTimeQueue != NULL || *PrioOne != NULL || *PrioTwo != NULL || *PrioThree != NULL){
+                moveprocess(Processor, *RealTimeQueue, *PrioOne, *PrioTwo, *PrioThree);
+            }
+            
     }
 
 }
@@ -352,8 +347,8 @@ int main() {
     
     // All the File stuff
     char filename[256]; // Buffer to hold the filename
+    int size;
     Process processes[1000];
-    int size = 0;
     getFilenameFromUser(filename, sizeof(filename)); // Call the function to get the filename from the user
     readProcesses(filename, processes, &size);// Call the function to process the file
     // Simple test function call to check if program was able to pull values
@@ -365,7 +360,7 @@ int main() {
 
 
 
-    simulateProcessArrival(Processor, size, &RealTimeQueue, &UserJobQueue, &PrioOne, &PrioTwo, &PrioThree, DispatchList); // This simulates the scheduler receiveing tasks at specific intervals of ticks
+    simulateProcessArrival(Processor, &RealTimeQueue, &UserJobQueue, &PrioOne, &PrioTwo, &PrioThree, DispatchList); // This simulates the scheduler receiveing tasks at specific intervals of ticks
 
     // Free all queues
     freeList(&RealTimeQueue);
