@@ -5,18 +5,12 @@ Nathan Perez 100754066
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h> //Comment out if running on Linux
+// #include <windows.h> //Comment out if running on Linux
 #include <string.h>
 #include <stdbool.h>
 #include "MEMmanage.h"
 
 // Define constraints for resources
-#define TOTAL_MEMORY 960 // in Mbytes
-#define MEMORY_FOR_RT 64  // in Mbytes
-#define TOTAL_PRINTERS 2    // Total available printers
-#define TOTAL_SCANNERS 1    // Total available scanners
-#define TOTAL_MODEMS 1      // Total available modems
-#define TOTAL_CDS 2         // Total available CD drives
 #define MAX_PROCESSES 100 // Constraint, as stated in lab manual, Changed to 100 for testing
 
 
@@ -28,27 +22,6 @@ typedef struct Node {
     Process* process;
     struct Node* next;
 } Node;
-
-// Creates structure for holding resource information
-typedef struct {
-    int usedMemory;    // Currently used memory in Mbytes
-    int usedPrinters;  // Currently used printers
-    int usedScanners;  // Currently used scanners
-    int usedModems;    // Currently used modems
-    int usedCDs;       // Currently used CDs
-} ResourceState;
-
-// void getFilenameFromUser(char* filename, int max_length);
-// void readProcesses(const char* filename, Process* processes[], int *size);
-// void insertInOrder(Process* array[], Process* newProcess, int *size);
-// void printProcesses(const Process* processes[], int size);
-// void simulateProcessArrival(Process* processes, int size, Node** RealTimeQueue, Node** UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree, Node* DispatchList);
-
-// void freeList(Node** head);
-// bool checkAndAllocateResources(Process* process);
-// void createLinkedListFromArray(Node** head, Process* processes[], int size);
-// void displayList(Node* DispatchList);
-
 
 // Start of Linked list fucntions
 
@@ -70,7 +43,8 @@ void insertAtBeginning(Node** head, Process* process) {
 }
 
 void insertAtEnd(Node** head, Process* process) {
-    Node* newNode = createNode(process);
+   printf("insert me please\n");
+   Node* newNode = createNode(process);
     if (*head == NULL) {
         *head = newNode;
         return;
@@ -80,14 +54,21 @@ void insertAtEnd(Node** head, Process* process) {
         temp = temp->next;
     }
     temp->next = newNode;
+    printf("insert me please 2\n");
 }
 
-void deleteNode(Node** head, Process* process) {
-    Node* temp = *head,
-    *head = temp->next;
 
-    destroyJob(temp->process);
-    free(temp);
+
+void deleteNode(Node **head) {
+    if(*head == NULL) {
+        printf("List is already empty.\n");
+    } else {
+        Node *toDelete = *head;
+        *head = (*head)->next; 
+        destroyJob(toDelete->process); // needs to be passed a process (process is the data in each node)
+        free(toDelete); 
+        printf("SUCCESSFULLY DELETED FIRST NODE FROM LIST\n");
+    }
 }
 
 
@@ -126,7 +107,7 @@ void getFilenameFromUser(char* filename, int max_length) {
 }
 
 // Function to insert
-void insertInOrder(Process* array[], Process* newProcess, int *size) {
+void insertInOrder(Process *array[], Process* newProcess, int *size) {
     int i = *size - 1;
     // Find the correct position for the new process
     while (i >= 0 && array[i]->arrivalTime > newProcess->arrivalTime) {
@@ -137,30 +118,45 @@ void insertInOrder(Process* array[], Process* newProcess, int *size) {
     (*size)++; // Increase the size of the array
 }
 
-// Function to read text  file
-void readProcesses(const char* filename, Process* processes[], int *size) {
+// Function to read text file and store processes in an array
+void readProcesses(const char* filename, Process processes[], int *size) {
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("Error opening file");
         exit(EXIT_FAILURE);
     }
 
-    Process tempProcess;
     *size = 0; // Start with an empty array
-    while (fscanf(file, "%d, %d, %d, %d, %d, %d, %d, %d\n",
-                  &tempProcess.arrivalTime,
-                  &tempProcess.priority,
-                  &tempProcess.processorTime,
-                  &tempProcess.memoryRequirement,
-                  &tempProcess.printers,
-                  &tempProcess.scanners,
-                  &tempProcess.modems,
-                  &tempProcess.cds) == 8) {
-        insertInOrder(processes, &tempProcess, size);
+    while (*size < 1000) { // Ensure we don't overflow the array, MAX_SIZE is the maximum capacity of 'processes'
+        if (fscanf(file, "%d, %d, %d, %d, %d, %d, %d, %d\n",
+                   &processes[*size].arrivalTime,
+                   &processes[*size].priority,
+                   &processes[*size].processorTime,
+                   &processes[*size].memoryRequirement,
+                   &processes[*size].printers,
+                   &processes[*size].scanners,
+                   &processes[*size].modems,
+                   &processes[*size].cds) == 8) {
+            // Successfully read a process, increment size
+            (*size)++;
+        } else {
+            // If fscanf fails to read 8 items, break out of the loop
+            // Also check if we've reached the end of the file or encountered an error
+            if (feof(file)) {
+                // End of file reached successfully
+                break;
+            } else if (ferror(file)) {
+                // File read error encountered
+                perror("Error reading file");
+                break;
+            }
+        }
     }
 
     fclose(file);
 }
+
+
 
 // Function to print the contents of the processes array, this is a test function, not needed in end program
 void printProcesses(const Process processes[], int size) {
@@ -178,96 +174,122 @@ void printProcesses(const Process processes[], int size) {
     }
 }
 
-void createLinkedListFromArray(Node* DispatchList, Process* processes[], int size) {
-    Process* p = NULL;
+void createLinkedListFromArray(Node** DispatchList, Process processes[], int size) {
     for (int i = 0; i < size; i++) {
-        p = processes[i];
-        insertAtEnd(&DispatchList, p);
+        insertAtEnd(DispatchList, &processes[i]);
     }
 }
+
 
 // End of File interpretation functions
 
 
 // Start of handling scheduling
-void handleProcess(Process* process, Node** RealTimeQueue, Node** UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree, Node* DispatchList) {
-    printf("Handling process with arrival time %d\n", process->arrivalTime);
+// void handleProcess(Node** RealTimeQueue, Node** UserJobQueue, Node* DispatchList) {
+//     printf("Handling process with arrival time %d\n", DispatchList->process->arrivalTime);
+//     if (DispatchList->process->priority == 0) {
+//         printf("handle 1\n");
+//         insertAtEnd(RealTimeQueue, DispatchList->process);
+//         deleteNode(&DispatchList);
+//     } else if (DispatchList->process->priority > 0 && DispatchList->process->priority <= 3) {
+//         printf("handle 2\n");
+//         insertAtEnd(UserJobQueue, DispatchList->process);
+//         printf("handle 3.5\n");
+//         deleteNode(&DispatchList);
+//         printf("handle 3\n");
+//     }
+// }
+
+void handleProcess(Node** Queue, Node* DispatchList) {
+    printf("Handling process with arrival time %d\n", DispatchList->process->arrivalTime);
+    insertAtEnd(Queue, DispatchList->process);
+    deleteNode(&DispatchList);
     
-    // Check the priority level of this new process
-    if (process->priority == 0) {
-        // Add this new process to RealTimeQueue
-        insertAtEnd(RealTimeQueue, process);
-    } else if (process->priority >= 1 && process->priority <= 3) {
-        // Add this process to UserJobQueue
-        insertAtEnd(UserJobQueue, process);
-        
-        // Check if the process has enough available resources to be run
-        // if (checkAndAllocateResources(process)) {
-        //     // Resources are subtracted from the total resources in checkAndAllocateResources
-        //     // Add the process to the appropriate priority queue
-        //     switch (process.priority) {
-        //         case 1:
-        //             insertAtEnd(PrioOne, process);
-        //             break;
-        //         case 2:
-        //             insertAtEnd(PrioTwo, process);
-        //             break;
-        //         case 3:
-        //             insertAtEnd(PrioThree, process);
-        //             break;
-        //     }
-        // }
+}
+
+void enqueueUserJob(Node **UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree){
+    switch((*UserJobQueue)->process->priority){
+        case 1:{
+            insertAtEnd(PrioOne, (*UserJobQueue)->process);
+            break;
+        }
+        case 2:{
+            insertAtEnd(PrioTwo, (*UserJobQueue)->process);
+            break;
+        }
+        case 3:{
+            insertAtEnd(PrioThree, (*UserJobQueue)->process);
+            break;
+        }
     }
+    deleteNode(UserJobQueue);
 }
 
 
-void moveprocess(Node* Processor, Node* RealTimeQueue, Node* PrioOne, Node* PrioTwo , Node* PrioThree){
+void moveprocess(Node *Processor, Node* RealTimeQueue, Node* PrioOne, Node* PrioTwo , Node* PrioThree){
+    if (Processor == NULL || Processor->process == NULL) {
+        if(RealTimeQueue->next != NULL){
+            insertAtBeginning(&Processor, RealTimeQueue->process);
+            deleteNode(&RealTimeQueue);
+        }else if(PrioOne->next != NULL){
+            insertAtBeginning(&Processor, PrioOne->process);
+            deleteNode(&PrioOne);
+        }else if(PrioTwo->next != NULL){
+            insertAtBeginning(&Processor, PrioTwo->process);
+            deleteNode(&PrioTwo);
+        }else{
+            insertAtBeginning(&Processor, PrioThree->process);
+            deleteNode(&PrioThree);
+        }
+    }
     switch(Processor->process->priority){
         case 0:
             return;
         case 1:{
             if(RealTimeQueue->next != NULL){
                 insertAtEnd(&PrioTwo, Processor->process);
-                deleteNode(&Processor, Processor->process);
+                deleteNode(&Processor);
                 insertAtBeginning(&Processor, RealTimeQueue->process);
-                deleteNode(&RealTimeQueue, RealTimeQueue->process);
+                deleteNode(&RealTimeQueue);
             }
+            break;
         }
         case 2:{
             if(RealTimeQueue->next != NULL){
                 insertAtEnd(&PrioThree, Processor->process);
-                deleteNode(&Processor, Processor->process);
+                deleteNode(&Processor);
                 insertAtBeginning(&Processor, RealTimeQueue->process);
-                deleteNode(&RealTimeQueue, RealTimeQueue->process);
+                deleteNode(&RealTimeQueue);
             }else if(PrioOne->next != NULL){
                 insertAtEnd(&PrioThree, Processor->process);
-                deleteNode(&Processor, Processor->process);
+                deleteNode(&Processor);
                 insertAtBeginning(&Processor, PrioOne->process);
-                deleteNode(&PrioOne, PrioOne->process);
+                deleteNode(&PrioOne);
             }
+            break;
         }
         case 3:{
             if(RealTimeQueue->next != NULL){
                 insertAtEnd(&PrioThree, Processor->process);
-                deleteNode(&Processor, Processor->process);
+                deleteNode(&Processor);
                 insertAtBeginning(&Processor, RealTimeQueue->process);
-                deleteNode(&RealTimeQueue, RealTimeQueue->process);
+                deleteNode(&RealTimeQueue);
             }else if(PrioOne->next != NULL){
                 insertAtEnd(&PrioThree, Processor->process);
-                deleteNode(&Processor, Processor->process);
+                deleteNode(&Processor);
                 insertAtBeginning(&Processor, PrioOne->process);
-                deleteNode(&PrioOne, PrioOne->process);
+                deleteNode(&PrioOne);
             }else if(PrioTwo->next != NULL){
                 insertAtEnd(&PrioThree, Processor->process);
-                deleteNode(&Processor, Processor->process);
+                deleteNode(&Processor);
                 insertAtBeginning(&Processor, PrioTwo->process);
-                deleteNode(&PrioTwo, PrioTwo->process);
+                deleteNode(&PrioTwo);
             }
+            break;
         }
     }
 
 }
-
 
 
 void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Node** UserJobQueue, Node** PrioOne, Node** PrioTwo, Node** PrioThree, Node* DispatchList) {
@@ -275,21 +297,35 @@ void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Nod
         printf("New Tick %d\n",currentTime);
         for (int i = 0; i < size; i++) {
 
-            // Decrement processorTime of current running process in Processor
+            if(Processor->process->processorTime == 0){
+                destroyJob(Processor->process);
+                Processor = NULL;
+            }
 
+            // Decrement processorTime of current running process in Processor
             if(Processor!=NULL){
+                printf("hello there\n");
                 Processor->process->processorTime -= 1;
             }
-
+                printf("hello there 2\n");
             // Check if the first node in the DispatchList can be queue
-            while(checkResource(DispatchList->process))
-            {
-                Allocate(DispatchList->process);
-                handleProcess(Processor->process, RealTimeQueue, UserJobQueue, PrioOne, PrioTwo, PrioThree, DispatchList);
+            while(DispatchList->process->arrivalTime <= currentTime){
+                if(DispatchList->process->priority == 0){
+                    if(checkResource(DispatchList->process)){
+                        Allocate(DispatchList->process);
+                        handleProcess(RealTimeQueue, DispatchList);
+                    }
+                }else{
+                    handleProcess(UserJobQueue, DispatchList);
+                    if(checkResource((*UserJobQueue)->process)){
+                        Allocate((*UserJobQueue)->process);
+                        enqueueUserJob(UserJobQueue, PrioOne, PrioTwo, PrioThree);
+                    }
+                }
             }
-
+            printf("hello there 4\n");
             // Function call to see if processor is being used by the highest priority funciton possible & to find new function for processor
-            moveprocess(Processor, *RealTimeQueue, PrioOne, PrioTwo, PrioThree);
+            moveprocess(Processor, *RealTimeQueue, *PrioOne, *PrioTwo, *PrioThree);
 
 
         }
@@ -304,7 +340,8 @@ void simulateProcessArrival(Node* Processor, int size, Node** RealTimeQueue, Nod
 int main() {
     //MemoryBlock* root = initializeMemory(TOTAL_MEMORY); // Initialize with 1KB for testing
 
-    // Initialize all queues
+    // Initialize all queues, these are the heads of the queue
+    
     Node* RealTimeQueue = NULL;
     Node* UserJobQueue = NULL;
     Node* PrioOne = NULL;
@@ -315,20 +352,20 @@ int main() {
     
     // All the File stuff
     char filename[256]; // Buffer to hold the filename
-    Process processes[MAX_PROCESSES];
+    Process processes[1000];
     int size = 0;
     getFilenameFromUser(filename, sizeof(filename)); // Call the function to get the filename from the user
     readProcesses(filename, processes, &size);// Call the function to process the file
     // Simple test function call to check if program was able to pull values
-    //printProcesses(processes, size); // comment this out before hand in
+    printProcesses(processes, size); // comment this out before hand in
     // After this runs, there will be an array holding all of the process that were collected from the text file
-    createLinkedListFromArray(DispatchList, processes, size);
+    createLinkedListFromArray(&DispatchList, processes, size);
     displayList(DispatchList);
 
 
 
 
-    //simulateProcessArrival(processes, size, &RealTimeQueue, &UserJobQueue, &PrioOne, &PrioTwo, &PrioThree); // This simulates the scheduler receiveing tasks at specific intervals of ticks
+    simulateProcessArrival(Processor, size, &RealTimeQueue, &UserJobQueue, &PrioOne, &PrioTwo, &PrioThree, DispatchList); // This simulates the scheduler receiveing tasks at specific intervals of ticks
 
     // Free all queues
     freeList(&RealTimeQueue);
