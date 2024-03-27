@@ -70,7 +70,7 @@ int request_Resources(int customer_Num, int request[]) {
         needRemaining[customer_Num][i] -= request[i];
     }
 
-    printf("Request for Customer %d has been granted.\n", customer_Num);
+    printf("Request for Customer %d has been granted.\n", customer_Num + 1);
     return 0; // Request has been granted
 }
 
@@ -149,6 +149,7 @@ void print2DArray(int arr[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES]) {
     }
 }
 
+// Must add a check to see if max need is all 0's (FIX ME)
 // This function will fill the max need array for each person that will not exceed the total resources for the system
 void fillMaximumNeed() {
     srand(time(NULL));
@@ -171,7 +172,7 @@ void calculateNeedRemaining() {
 
 
 // Add a feature to this function to check wether or not the customer already has all of the resources they need
-// If the customer already has all of the resources they need, snap the threads neck after waiting for a second
+// If the customer already has all of the resources they need, snap the threads neck after waiting for a second (FIX ME)
 
 // This function change the temp array used for resource requests
 void generateSmallerRow(int rowIndex) {
@@ -225,6 +226,8 @@ void serviceCustomers() {
         printf("\n");
         // This displays the current request for the customer
         request_Resources(i,tempRow);
+        printf("\nThis is the current allocated array\n");
+        print2DArray(allocatedCurrently);
 
     }
 }
