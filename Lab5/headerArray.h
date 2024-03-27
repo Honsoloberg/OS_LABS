@@ -149,15 +149,32 @@ void print2DArray(int arr[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES]) {
     }
 }
 
-// Must add a check to see if max need is all 0's (FIX ME)
+// Init. the maximum need array
+void initMaximumNeed(){		
+    for (int i = 0; i < NUMBER_OF_CUSTOMERS; i++) {
+        for (int j = 0; j < NUMBER_OF_RESOURCES; j++) {
+            maximumNeed[i][j] = 0;
+        }
+    }
+}
+// Must add a check to see if max need is all 0's (FIX ME) --> The generated row  
 // This function will fill the max need array for each person that will not exceed the total resources for the system
 void fillMaximumNeed() {
     srand(time(NULL));
+    initMaximumNeed();
+    bool allZero;
     for (int i = 0; i < NUMBER_OF_CUSTOMERS; i++) {
-        for (int j = 0; j < NUMBER_OF_RESOURCES; j++) {
-            // Generate a random number in the range [0, maxSystemResources[j]]
-            maximumNeed[i][j] = rand() % (maxSystemResources[j] + 1);
-        }
+	    allZero = true;
+	    for (int j = 0; j < NUMBER_OF_RESOURCES; j++) {
+		    // Generate a random number in the range [0, maxSystemResources[j]]
+		    maximumNeed[i][j] = rand() % (maxSystemResources[j] + 1);
+		    if(maxmiumNeed[i][j] != 0){
+			    allZero = false;
+		    }
+	    }
+	    if(allZero){
+		    i--;
+	    }
     }
 }
 
