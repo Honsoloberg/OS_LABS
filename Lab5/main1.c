@@ -4,15 +4,19 @@
 #include <stdio.h>
 #include <stdlib.h> // For atoi function
 #include "headerArray.h"
+#include <pthread.h>
+
+pthread_mutex_t lock; // For the mutex lock
 
 int main(int argc, char *argv[]){
 
 // Take in the values from the command line
-if(argc != 4){
+if((argc != 4)||((atoi(argv[1])==0)&&(atoi(argv[2])==0)&&(atoi(argv[3])==0))){
 
     printf("please know how to use this program!");
     return 1;
-}else{
+}
+else{
 
 // Convert arguments from strings to integers
     int resource1 = atoi(argv[1]);
@@ -41,7 +45,6 @@ printf("\n");
 printf("Here is the currently allocated array: \n");
 print2DArray(allocatedCurrently);
 printf("\n");
-
 
 // Now, resources will try to be requested from the system
 printf("\nNow, we are now going to try and request resources from the system\n");
