@@ -6,24 +6,36 @@
 
 #include <stdbool.h> // For bool, true, false
 #include <time.h>
+#include <pthread.h>
 
 // maxSystemResources array holds the amount of total resources the system has
 int maxSystemResources[NUMBER_OF_RESOURCES];
 
 // Holds the currently available (not allocated) resources of the system
 int available[NUMBER_OF_RESOURCES];
+pthread_mutex_t availableLock = PTHREAD_MUTEX_INITIALIZER; // Mutex lock for available
 
 // Holds the maximum need of each of the customers 
 int maximumNeed[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES];
+pthread_mutex_t maximumNeedLock = PTHREAD_MUTEX_INITIALIZER; // Mutex lock for maximumNeed
 
 // Holds the remaining need for each of the customers
 int needRemaining[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES];
+pthread_mutex_t needRemainingLock = PTHREAD_MUTEX_INITIALIZER; // Mutex lock for needRemaining
 
 // Holds the currently allocated resources for the customers
 int allocatedCurrently[NUMBER_OF_CUSTOMERS][NUMBER_OF_RESOURCES];
+pthread_mutex_t allocatedCurrentlyLock = PTHREAD_MUTEX_INITIALIZER; // Mutex lock for allocatedCurrently
 
 // Hold the temporary data used for requests
 int tempRow[NUMBER_OF_RESOURCES];
+pthread_mutex_t tempRowLock = PTHREAD_MUTEX_INITIALIZER; // Mutex lock for tempRow
+
+
+// Declare a mutex for resource allocation synchronization (not working fully yet)
+extern pthread_mutex_t lock;
+
+pthread_mutex_t resourceLock = PTHREAD_MUTEX_INITIALIZER
 
 // (working)
 // Function used at the start of the program to define the total available resouces for the system
@@ -64,11 +76,17 @@ int request_Resources(int customer_Num, int request[]) {
     // Step 1.a.i: Available = Available - Requesti
     // Allocationi = Allocationi + Requesti
     // Needi = Needi - Requesti
+    pthread_mutex_lock();
+    pthread_mutex_lock();
+    pthread_mutex_unlock();
     for (int i = 0; i < NUMBER_OF_RESOURCES; i++) {
         available[i] -= request[i];
         allocatedCurrently[customer_Num][i] += request[i];
         needRemaining[customer_Num][i] -= request[i];
     }
+    pthread_mutex_unlock();
+    pthread_mutex_unlock();
+    pthread_mutex_unlock();
 
     printf("Request for Customer %d has been granted.\n", customer_Num + 1);
     return 0; // Request has been granted
@@ -76,11 +94,17 @@ int request_Resources(int customer_Num, int request[]) {
 
 
 int release_Resources(int customer_Num, int release[]){
+    pthread_mutex_unlock();
+    pthread_mutex_unlock();
+    pthread_mutex_unlock();
 for (int i = 0; i < NUMBER_OF_RESOURCES; i++) {
         available[i] += release[i];
         allocatedCurrently[customer_Num][i] -= release[i];
         needRemaining[customer_Num][i] += release[i];
     }
+    pthread_mutex_unlock();
+    pthread_mutex_unlock();
+    pthread_mutex_unlock();
 return 0; // -1 if cant do, why should this ever be -1?
 }
 
@@ -168,7 +192,7 @@ void fillMaximumNeed() {
 	    for (int j = 0; j < NUMBER_OF_RESOURCES; j++) {
 		    // Generate a random number in the range [0, maxSystemResources[j]]
 		    maximumNeed[i][j] = rand() % (maxSystemResources[j] + 1);
-		    if(maxmiumNeed[i][j] != 0){
+		    if(maximumNeed[i][j] != 0){
 			    allZero = false;
 		    }
 	    }
