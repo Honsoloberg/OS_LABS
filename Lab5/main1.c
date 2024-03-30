@@ -32,7 +32,7 @@ printf("Here are the values for the total resources: %d, %d, %d\n", resource1, r
 // Now we fill the max need array for each of the customers
 fillMaximumNeed();
 // The maximum need array is now filled with acceptable values,
-printf("\nHere is the maximum need array\n");
+printf("\nHere is the randomly generated maximum need array\n");
 print2DArray(maximumNeed);
 printf("\n");
 // Maximum need array is now filled
@@ -49,6 +49,32 @@ printf("\n");
 // Now, resources will try to be requested from the system
 printf("\nNow, we are now going to try and request resources from the system\n");
 serviceCustomers();
+printf("\n\nBellow is the maxium need array\n");
+print2DArray(maximumNeed);
+// The above code is for testing the functionalities for the algorithms
+printf("\n\n\nThe above represents the current system state, and replicates a natural system in use\n\n\n");
+
+printf("\n\n Now lets get our threads created and get them to randomly request and deallocate resources\n\n");
+
+// The following code is for threads
+
+pthread_t threadIDs[NUMBER_OF_CUSTOMERS];
+int threadArgs[NUMBER_OF_CUSTOMERS];
+    
+    for (int i = 0; i < NUMBER_OF_CUSTOMERS; ++i) {
+        threadArgs[i] = i + 1; // Assign thread argument numbers 1 through 5
+        if (pthread_create(&threadIDs[i], NULL, threadFunction, (void *)&threadArgs[i]) != 0) {
+            perror("Failed to create thread");
+            return EXIT_FAILURE;
+        }
+    }
+
+    // Wait for all threads to complete
+    for (int i = 0; i < NUMBER_OF_CUSTOMERS; ++i) {
+        pthread_join(threadIDs[i], NULL);
+    }
+
+    printf("\nWe made it to the end\n");
 
 return 0;
 
